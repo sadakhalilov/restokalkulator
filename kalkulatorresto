@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+<meta charset="UTF-8">
+<title>Евро-Каса 2026 – Универсална</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<style>
+:root{
+  --primary:#00264d; --accent:#d4af37; --bg:#f2f2f2; --error:#dc3545; --ok:#28a745; --warn:#ffc107;
+  --eur:#28a745; --bgn:#007bff;
+  --btn-h:56px; --font-size:20px;
+}
+*{box-sizing:border-box;}
+body{margin:0;font-family:-apple-system,Segoe UI,Roboto,Helvetica;font-size:16px;background:var(--bg);display:flex;justify-content:center;padding:8px}
+.container{background:#fff;border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,.15);width:100%;max-width:480px;padding:16px}
+h2{margin:0 0 12px;text-align:center;color:var(--primary);font-size:22px}
+.info-banner{background:#e3f2fd;border:1px solid #90caf9;border-radius:8px;padding:10px;text-align:center;font-size:13px;margin-bottom:12px;color:#1565c0}
+label{font-weight:600;font-size:12px;display:block;margin-bottom:4px}
+input[type=number]{width:100%;font-size:var(--font-size);padding:12px;border:2px solid var(--border);border-radius:6px;text-align:right}
+.eur-input{border-color:var(--eur);background:#f0fff4}
+.bgn-input{border-color:var(--bgn);background:#f0f8ff}
+.quick-calc{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:10px 0}
+.quick-btn{height:var(--btn-h);border:2px solid;border-radius:6px;background:#fff;font-size:15px;font-weight:600;cursor:pointer;transition:.15s}
+.quick-btn.eur{border-color:var(--eur);color:var(--eur)}
+.quick-btn.eur:hover{background:var(--eur);color:#fff}
+.quick-btn.bgn{border-color:var(--bgn);color:var(--bgn)}
+.quick-btn.bgn:hover{background:var(--bgn);color:#fff}
+.result-zone{background:var(--primary);color:#fff;padding:16px;border-radius:8px;text-align:center;margin:12px 0}
+.result-value{font-size:38px;font-weight:bold;color:var(--accent)}
+.change-toggle{display:flex;justify-content:center;gap:8px;margin:8px 0}
+.change-toggle button{flex:1;padding:10px;border:2px solid #fff;border-radius:6px;background:transparent;color:#fff;font-weight:600;cursor:pointer}
+.change-toggle button.active{background:#fff;color:var(--primary)}
+.button-group{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+button{padding:14px;border:none;border-radius:6px;font-size:15px;font-weight:600;cursor:pointer}
+.btn-save{background:var(--ok);color:#fff}
+.btn-print{background:var(--primary);color:#fff}
+.btn-cancel{background:var(--error);color:#fff}
+button:disabled{opacity:.5;cursor:not-allowed}
+.error-banner,.ok-banner{padding:10px;border-radius:6px;text-align:center;font-weight:600;margin:8px 0;display:none}
+.error-banner{background:#f8d7da;color:#721c24;border:1px solid #f5c6cb}
+.ok-banner{background:#d4edda;color:#155724;border:1px solid #c3e6cb}
+.history-table{width:100%;font-size:11px;border-collapse:collapse;margin-top:10px}
+.history-table th,.history-table td{border:1px solid #ddd;padding:6px;text-align:center}
+.history-table th{background:var(--primary);color:#fff}
+.stat-panel{background:#f8f9fa;border-radius:8px;padding:10px;margin-top:10px;font-size:13px}
+.stat-item{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #eee}
+.stat-item:last-child{border:none}
+.eur-text{color:var(--eur);font-weight:600}
+.bgn-text{color:var(--bgn);font-weight:600}
+.admin-toggle{position:fixed;bottom:4px;right:4px;opacity:.3;background:none;border:none;font-size:20px;cursor:pointer}
+#adminPanel{display:none;position:fixed;inset:0;background:rgba(0,0,0,.9);color:#fff;padding:20px;z-index:100;overflow-y:auto}
+#adminPanel h3{display:flex;justify-content:space-between}
+#adminPanel button{background:#dc3545;color:#fff;width:100%;padding:10px;margin-top:10px}
+@media print{body *{display:none}#print-receipt{display:block}}
+#print-receipt{display:none;font-family:monospace;width:280px;margin:auto;color:#000}
+#print-receipt .center{text-align:center}#print-receipt .line{border-top:1px dashed #000;margin:6px 0}
+#print-receipt .total{font-size:20px;font-weight:bold;text-align:center;margin-top:8px}
+</style>
+</head>
+<body>
+<div class="container">
+  <h2>🇪🇺 Евро-Каса 2026</h2>
+  <div class="info-banner">Плащането може да е в лева и/или евро. Рестото се връща според избрания режим.</div>
+
+  <label class="eur-text">Сума за плащане (EUR)</label>
+  <input id="totalEUR" type="number" step="0.01" placeholder="0.00" class="eur-input">
+
+  <div class="quick-calc">
+    <!-- EUR банкноти -->
+    <button class="quick-btn eur" onclick="quick('eur',5)">5 €</button>
+    <button class="quick-btn eur" onclick="quick('eur',10)">10 €</button>
+    <button class="quick-btn eur" onclick="quick('eur',20)">20 €</button>
+    <button class="quick-btn eur" onclick="quick('eur',50)">50 €</button>
+    <button class="quick-btn eur" onclick="quick('eur',100)">100 €</button>
+    <button class="quick-btn eur" onclick="quick('eur',200)">200 €</button>
+    <!-- BGN банкноти -->
+    <button class="quick-btn bgn" onclick="quick('bgn',5)">5 лв</button>
+    <button class="quick-btn bgn" onclick="quick('bgn',10)">10 лв</button>
+    <button class="quick-btn bgn" onclick="quick('bgn',20)">20 лв</button>
+    <button class="quick-btn bgn" onclick="quick('bgn',50)">50 лв</button>
+    <button class="quick-btn bgn" onclick="quick('bgn',100)">100 лв</button>
+    <button class="quick-btn bgn" onclick="quick('bgn',200)">200 лв</button>
+  </div>
+
+  <label class="bgn-text">Платено в лева</label>
+  <input id="givenBGN" type="number" step="0.01" placeholder="0.00" class="bgn-input">
+
+  <label class="eur-text">Платено в евро</label>
+  <input id="givenEUR" type="number" step="0.01" placeholder="0.00" class="eur-input">
+
+  <div id="errorBanner" class="error-banner"></div>
+  <div id="okBanner" class="ok-banner"></div>
+
+  <div class="result-zone">
+    <div style="font-size:12px">РЕСТО</div>
+    <div id="restTotal" class="result-value">0.00</div>
+    <div class="change-toggle">
+      <button id="btnGiveEUR" class="active" onclick="setGiveMode('EUR')">Връщам в €</button>
+      <button id="btnGiveBGN" onclick="setGiveMode('BGN')">Връщам в лв</button>
+      <button id="btnGiveMix" onclick="setGiveMode('MIX')">Смесено</button>
+    </div>
+    <div id="restDetail" class="bgn-text"></div>
+  </div>
+
+  <div class="stat-panel">
+    <div class="stat-item"><span>Оборот днес:</span><span class="eur-text"><span id="stEUR">0.00</span> €</span></div>
+    <div class="stat-item"><span>Платено лева:</span><span class="bgn-text"><span id="stBGN">0.00</span> лв</span></div>
+    <div class="stat-item"><span>Платено евро:</span><span class="eur-text"><span id="stPaidEUR">0.00</span> €</span></div>
+  </div>
+
+  <div class="button-group">
+    <button class="btn-save" onclick="saveOrder()">💾 Запис</button>
+    <button class="btn-print" onclick="printOrder()">🖨️ Печат</button>
+    <button class="btn-cancel" onclick="undoLast()">↩ Отмяна</button>
+  </div>
+
+  <table class="history-table">
+    <thead><tr><th>Дата/Час</th><th>Сума €</th><th>Платено €</th><th>Платено лв</th><th>Ресто</th></tr></thead>
+    <tbody id="histBody"></tbody>
+  </table>
+</div>
+
+<button class="admin-toggle" onclick="toggleAdmin()">⚙️</button>
+<div id="adminPanel">
+  <h3>Админ <button onclick="toggleAdmin()" style="background:none;color:#fff;border:none;font-size:20px;float:right">✖</button></h3>
+  <div style="background:#222;padding:12px;border-radius:8px">
+    <div class="stat-item"><span>Оборот днес (лв):</span><span style="color:var(--accent);font-size:18px" id="admLV">0.00</span></div>
+    <button onclick="exportCSV()">📥 Експорт CSV</button>
+    <button onclick="clearDay()">🗑 Изтрий деня</button>
+  </div>
+</div>
+
+<div id="print-receipt">
+  <div class="center"><strong>СТРОИТЕЛЕН МАРКЕТ</strong></div>
+  <div class="line"></div>
+  <div>ОБЩО: <span id="prTotal"></span> €</div>
+  <div>ПЛАТЕНО ЛВ: <span id="prBGN"></span> лв</div>
+  <div>ПЛАТЕНО €: <span id="prEUR"></span> €</div>
+  <div class="line"></div>
+  <div class="total">РЕСТО: <span id="prRest"></span></div>
+  <div class="line"></div>
+  <div class="center">Благодарим Ви!</div>
+</div>
+
+<script>
+const RATE=1.95583;
+let giveMode='EUR'; // EUR / BGN / MIX
+let daily={totalEUR:0,paidBGN:0,paidEUR:0,ords:[]};
+let todayKey='day_'+new Date().toISOString().slice(0,10);
+
+/* ---------- звук ---------- */
+const audioCtx=typeof AudioContext!=='undefined'?new AudioContext():new window.webkitAudioContext();
+function beep(freq=600,ms=150){
+  const o=audioCtx.createOscillator(),g=audioCtx.createGain();
+  o.connect(g);g.connect(audioCtx.destination);
+  o.frequency.value=freq;g.gain.value=0.2;
+  o.start();o.stop(audioCtx.currentTime+ms/1000);
+}
+function okSound(){beep(900,120);}
+function errSound(){beep(300,250);}
+
+/* ---------- storage ---------- */
+function load(){
+  const s=localStorage.getItem(todayKey);
+  if(s){daily=JSON.parse(s); refl();}
+}
+function save(){localStorage.setItem(todayKey,JSON.stringify(daily)); refl();}
+load();
+
+/* ---------- ui helpers ---------- */
+function flashBanner(msg,isErr){
+  const b=document.getElementById(isErr?'errorBanner':'okBanner');
+  b.textContent=msg; b.style.display='block';
+  setTimeout(()=>b.style.display='none',2500);
+}
+function refl(){
+  document.getElementById('stEUR').textContent=daily.totalEUR.toFixed(2);
+  document.getElementById('stBGN').textContent=daily.paidBGN.toFixed(2);
+  document.getElementById('stPaidEUR').textContent=daily.paidEUR.toFixed(2);
+  document.getElementById('admLV').textContent=(daily.totalEUR*RATE).toFixed(2);
+  const hb=document.getElementById('histBody');
+  hb.innerHTML=daily.ords.slice(-15).reverse().map(o=>
+   `<tr><td>${o.time}</td><td class="eur-text">${o.eur.toFixed(2)}</td>
+    <td class="eur-text">${o.pEur.toFixed(2)}</td>
+    <td class="bgn-text">${o.bgn.toFixed(2)}</td>
+    <td>${o.rest}</td></tr>`).join('');
+}
+function setGiveMode(m){
+  giveMode=m;
+  document.querySelectorAll('.change-toggle button').forEach(b=>b.classList.remove('active'));
+  document.getElementById('btnGive'+m).classList.add('active');
+  calc();
+}
+
+/* ---------- calc ---------- */
+function calc(){
+  const t=parseFloat(document.getElementById('totalEUR').value)||0;
+  const gB=parseFloat(document.getElementById('givenBGN').value)||0;
+  const gE=parseFloat(document.getElementById('givenEUR').value)||0;
+  const paidE=gE+gB/RATE;
+  const restE=paidE-t;
+  const restB=restE*RATE;
+  let restTxt='',detail='';
+  if(restE<0){
+    document.getElementById('restTotal').textContent='—';
+    document.getElementById('restDetail').textContent='Недостатъчно пари!';
+    document.getElementById('restTotal').style.color='#ffcccb';
+    return null;
+  }
+  document.getElementById('restTotal').style.color='var(--accent)';
+  if(giveMode==='EUR'){ restTxt=restE.toFixed(2)+' €'; detail='('+restB.toFixed(2)+' лв)'; }
+  else if(giveMode==='BGN'){ restTxt=restB.toFixed(2)+' лв'; detail='('+restE.toFixed(2)+' €)'; }
+  else { restTxt=restE.toFixed(2)+' € + '+restB.toFixed(2)+' лв'; }
+  document.getElementById('restTotal').textContent=restTxt;
+  document.getElementById('restDetail').textContent=detail;
+  return {t,gB,gE,paidE,restE,restB};
+}
+document.querySelectorAll('input[type=number]').forEach(i=>i.addEventListener('input',calc));
+
+/* ---------- quick ---------- */
+function quick(c,v){
+  const id=c==='eur'?'givenEUR':'givenBGN';
+  const n=parseFloat(document.getElementById(id).value)||0;
+  document.getElementById(id).value=(n+v).toFixed(2);
+  calc();
+}
+
+/* ---------- order ---------- */
+function validate(){
+  const c=calc();
+  if(!c){errSound(); flashBanner('Недостатъчно пари!',true); return false;}
+  if(c.t<=0){errSound(); flashBanner('Въведи сума!',true); return false;}
+  return c;
+}
+function saveOrder(){
+  const c=validate(); if(!c) return;
+  const now=new Date();
+  const o={time:now.toLocaleString('bg-BG'),eur:c.t,pEur:c.gE,bgn:c.gB,
+          rest:(giveMode==='EUR'?c.restE.toFixed(2)+' €':
+                giveMode==='BGN'?c.restB.toFixed(2)+' лв':
+                c.restE.toFixed(2)+' € + '+c.restB.toFixed(2)+' лв')};
+  daily.totalEUR+=c.t; daily.paidBGN+=c.gB; daily.paidEUR+=c.gE;
+  daily.ords.push(o); save(); okSound(); flashBanner('Продажбата е записана!',false);
+  clearInputs();
+}
+function clearInputs(){
+  document.getElementById('totalEUR').value='';
+  document.getElementById('givenBGN').value='';
+  document.getElementById('givenEUR').value='';
+  calc();
+}
+function printOrder(){
+  const c=validate(); if(!c) return;
+  if(!confirm('Печат на бележка?')) return;
+  const r=giveMode==='EUR'?c.restE.toFixed(2)+' €':
+           giveMode==='BGN'?c.restB.toFixed(2)+' лв':
+           c.restE.toFixed(2)+' € + '+c.restB.toFixed(2)+' лв';
+  document.getElementById('prTotal').textContent=c.t.toFixed(2);
+  document.getElementById('prBGN').textContent=c.gB.toFixed(2);
+  document.getElementById('prEUR').textContent=c.gE.toFixed(2);
+  document.getElementById('prRest').textContent=r;
+  const w=window.open('','print','width=320,height=600');
+  w.document.write('<html><head><title>БОН</title></head><body>'+
+    document.getElementById('print-receipt').innerHTML+'</body></html>');
+  w.document.close(); w.focus(); w.print(); w.close();
+  saveOrder(); // записва след печат
+}
+function undoLast(){
+  if(daily.ords.length===0){errSound(); flashBanner('Няма какво да отменя!',true); return;}
+  const last=daily.ords.pop();
+  daily.totalEUR-=last.eur; daily.paidBGN-=last.bgn; daily.paidEUR-=last.pEur;
+  save(); okSound(); flashBanner('Последната продажба е отменена!',false);
+}
+function toggleAdmin(){
+  const p=document.getElementById('adminPanel');
+  p.style.display=p.style.display==='block'?'none':'block';
+}
+function exportCSV(){
+  let csv='Дата,Сума EUR,Платено EUR,Платено BGN,Ресто\n';
+  daily.ords.forEach(o=>csv+=`${o.time},${o.eur},${o.pEur},${o.bgn},"${o.rest}"\n`);
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
+  const a=document.createElement('a'),url=URL.createObjectURL(blob);
+  a.href=url; a.download='sales_'+todayKey+'.csv'; a.click();
+}
+function clearDay(){
+  if(!confirm('Изтриване на целия ден?')) return;
+  daily={totalEUR:0,paidBGN:0,paidEUR:0,ords:[]}; save(); refl();
+  flashBanner('Денят е изтрит!',false);
+}
+/* ---------- init ---------- */
+calc();
+</script>
+</body>
+</html>
